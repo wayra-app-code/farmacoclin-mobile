@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import TagInput from '../components/TagInput';
 import { suggestPrescription } from '../services/api';
+import { useLanguage } from '../LanguageContext';
 
 const PURPLE = '#6D28D9';
 const DARK = '#0F172A';
@@ -24,7 +25,7 @@ export default function PrescribeScreen({ navigation }) {
   const [currentMeds, setCurrentMeds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
-  const [language, setLanguage] = useState('pt');
+  const { language, setLanguage } = useLanguage();
 
   async function handlePrescribe() {
     if (!diseases.length) { Alert.alert('Atenção', 'Adiciona pelo menos uma doença ou condição.'); return; }
