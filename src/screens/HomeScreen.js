@@ -7,6 +7,7 @@ import {
 import TagInput from '../components/TagInput';
 import DrugAutocomplete from '../components/DrugAutocomplete';
 import { analyzeInteractions } from '../services/api';
+import { useLanguage } from '../LanguageContext';
 
 const BLUE = '#1B4FD8';
 const TEAL = '#0D9488';
@@ -26,7 +27,7 @@ export default function HomeScreen({ navigation }) {
   const [diseases, setDiseases] = useState([]);
   const [drugs, setDrugs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [language, setLanguage] = useState('pt');
+  const { language, setLanguage } = useLanguage();
 
   async function handleAnalyze() {
     if (!diseases.length) { Alert.alert('Atenção', 'Adiciona pelo menos uma doença ou condição.'); return; }
