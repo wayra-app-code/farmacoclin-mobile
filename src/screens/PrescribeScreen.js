@@ -6,142 +6,205 @@ import {
 import TagInput from '../components/TagInput';
 import { suggestPrescription } from '../services/api';
 
+const PURPLE = '#6D28D9';
+const DARK = '#0F172A';
+const GRAY = '#64748B';
+const WHITE = '#FFFFFF';
+
+const LANGUAGES = [
+  { code: 'pt', flag: '🇵🇹', label: 'PT' },
+  { code: 'en', flag: '🇬🇧', label: 'EN' },
+  { code: 'fr', flag: '🇫🇷', label: 'FR' },
+  { code: 'es', flag: '🇪🇸', label: 'ES' },
+];
+
 export default function PrescribeScreen({ navigation }) {
   const [diseases, setDiseases] = useState([]);
   const [allergies, setAllergies] = useState([]);
   const [currentMeds, setCurrentMeds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
+  const [language, setLanguage] = useState('pt');
 
   async function handlePrescribe() {
-    if (diseases.length === 0) {
-      Alert.alert('Atenção', 'Adiciona pelo menos uma doença ou condição.');
-      return;
-    }
+    if (!diseases.length) { Alert.alert('Atenção', 'Adiciona pelo menos uma doença ou condição.'); return; }
     setLoading(true);
     setLoadingMsg('A consultar guidelines clínicas...');
-    const timer = setTimeout(() => setLoadingMsg('A analisar interações e contraindicações...'), 5000);
-    const timer2 = setTimeout(() => setLoadingMsg('A preparar sugestão de receita...'), 12000);
+    const t1 = setTimeout(() => setLoadingMsg('A analisar interações e contraindicações...'), 5000);
+    const t2 = setTimeout(() => setLoadingMsg('A preparar sugestão de receita...'), 12000);
     try {
-      const result = await suggestPrescription(diseases, allergies, currentMeds);
-      clearTimeout(timer);
-      clearTimeout(timer2);
+      const result = await suggestPrescription(diseases, allergies, currentMeds, language);
+      clearTimeout(t1); clearTimeout(t2);
       navigation.navigate('Result', { result: { ...result, analysis: result.suggestion, isPrescription: true } });
     } catch (err) {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-      const msg = err.code === 'ECONNABORTED'
-        ? 'A análise demorou demasiado. Tenta com menos condições ou verifica a ligação.'
-        : 'Não foi possível ligar ao servidor. Verifica que o backend está ativo.';
-      Alert.alert('Erro', msg);
-    } finally {
-      setLoading(false);
-      setLoadingMsg('');
-    }
+      clearTimeout(t1); clearTimeout(t2);
+      Alert.alert('Erro', err.code === 'ECONNABORTED'
+        ? 'A análise demorou demasiado. Tenta novamente.'
+        : 'Não foi possível ligar ao servidor.');
+    } finally { setLoading(false); setLoadingMsg(''); }
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={s.safe}>
+      <StatusBar barStyle="light-content" backgroundColor={PURPLE} />
+      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>←</Text>
+        {/* Header */}
+        <View style={s.hero}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
+            <Text style={s.backText}>← Voltar</Text>
           </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>📋 Sugestão de Receita</Text>
-            <Text style={styles.subtitle}>Medicação baseada nas condições do paciente</Text>
+          <View style={s.heroContent}>
+            <Text style={s.heroIcon}>📋</Text>
+            <Text style={s.heroTitle}>Sugestão de Receita</Text>
+            <Text style={s.heroSub}>Medicação baseada nas condições do paciente e guidelines clínicas</Text>
+          <View style={s.langRow}>
+            {LANGUAGES.map((l) => (
+              <TouchableOpacity
+                key={l.code}
+                style={[s.langBtn, language === l.code && s.langBtnActive]}
+                onPress={() => setLanguage(l.code)}
+              >
+                <Text style={s.langFlag}>{l.flag}</Text>
+                <Text style={[s.langLabel, language === l.code && s.langLabelActive]}>{l.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           </View>
         </View>
 
-        <View style={styles.card}>
-          <TagInput
-            label="Doenças / Condições"
-            placeholder="ex: diabetes tipo 2, dores na coluna..."
-            tags={diseases}
-            onAdd={(d) => setDiseases([...diseases, d])}
-            onRemove={(d) => setDiseases(diseases.filter((x) => x !== d))}
-            color="#7C3AED"
-          />
+        {/* Form */}
+        <View style={s.formCard}>
 
-          <TagInput
-            label="Alergias (opcional)"
-            placeholder="ex: penicilina, AINEs..."
-            tags={allergies}
-            onAdd={(d) => setAllergies([...allergies, d])}
-            onRemove={(d) => setAllergies(allergies.filter((x) => x !== d))}
-            color="#DC2626"
-          />
+          <View style={s.section}>
+            <View style={s.sectionHeader}>
+              <View style={[s.sectionDot, { backgroundColor: PURPLE }]} />
+              <Text style={s.sectionTitle}>Condições do Paciente</Text>
+            </View>
+            <TagInput
+              label=""
+              placeholder="ex: diabetes tipo 2, dores na coluna..."
+              tags={diseases}
+              onAdd={(d) => setDiseases([...diseases, d])}
+              onRemove={(d) => setDiseases(diseases.filter(x => x !== d))}
+              color={PURPLE}
+            />
+          </View>
 
-          <TagInput
-            label="Medicação atual (opcional)"
-            placeholder="ex: metformina, omeprazol..."
-            tags={currentMeds}
-            onAdd={(d) => setCurrentMeds([...currentMeds, d])}
-            onRemove={(d) => setCurrentMeds(currentMeds.filter((x) => x !== d))}
-            color="#059669"
-          />
+          <View style={s.divider} />
 
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>
-              🤖 O Claude irá sugerir medicação de primeira e segunda linha com base nas guidelines clínicas, verificando interações e contraindicações.
-            </Text>
+          <View style={s.section}>
+            <View style={s.sectionHeader}>
+              <View style={[s.sectionDot, { backgroundColor: '#DC2626' }]} />
+              <Text style={s.sectionTitle}>Alergias <Text style={s.optional}>(opcional)</Text></Text>
+            </View>
+            <TagInput
+              label=""
+              placeholder="ex: penicilina, AINEs, sulfamidas..."
+              tags={allergies}
+              onAdd={(d) => setAllergies([...allergies, d])}
+              onRemove={(d) => setAllergies(allergies.filter(x => x !== d))}
+              color="#DC2626"
+            />
+          </View>
+
+          <View style={s.divider} />
+
+          <View style={s.section}>
+            <View style={s.sectionHeader}>
+              <View style={[s.sectionDot, { backgroundColor: '#0D9488' }]} />
+              <Text style={s.sectionTitle}>Medicação Actual <Text style={s.optional}>(opcional)</Text></Text>
+            </View>
+            <TagInput
+              label=""
+              placeholder="ex: metformina, omeprazol..."
+              tags={currentMeds}
+              onAdd={(d) => setCurrentMeds([...currentMeds, d])}
+              onRemove={(d) => setCurrentMeds(currentMeds.filter(x => x !== d))}
+              color="#0D9488"
+            />
+          </View>
+
+          <View style={s.infoBox}>
+            <Text style={s.infoText}>🤖 O Claude analisa as guidelines clínicas actuais e sugere medicação de primeira e segunda linha, verificando interações e contraindicações.</Text>
           </View>
 
           <TouchableOpacity
-            style={[styles.btn, loading && styles.btnDisabled]}
+            style={[s.btn, loading && s.btnLoading]}
             onPress={handlePrescribe}
             disabled={loading}
           >
-            {loading ? (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator color="#fff" />
-                <Text style={styles.loadingText}>{loadingMsg}</Text>
-              </View>
-            ) : (
-              <Text style={styles.btnText}>Gerar Sugestão de Receita</Text>
-            )}
+            {loading
+              ? <><ActivityIndicator color={WHITE} style={{ marginRight: 10 }} /><Text style={s.btnText}>{loadingMsg}</Text></>
+              : <Text style={s.btnText}>Gerar Sugestão de Receita</Text>
+            }
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.disclaimer}>
-          ⚕️ Sugestão de apoio clínico gerada por IA. Não substitui o julgamento médico nem dispensa a consulta das guidelines atuais.
-        </Text>
+        <Text style={s.disclaimer}>⚕️ Sugestão de apoio clínico — não substitui o julgamento médico</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F3F4F6' },
-  scroll: { padding: 20, paddingBottom: 40 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, marginTop: 8, gap: 12 },
-  backBtn: { padding: 4 },
-  backText: { fontSize: 24, color: '#374151' },
-  headerText: { flex: 1 },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 20,
-    shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }, elevation: 3,
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: PURPLE },
+  scroll: { paddingBottom: 40 },
+
+  hero: { backgroundColor: PURPLE, padding: 24, paddingBottom: 32 },
+  backBtn: { marginBottom: 20 },
+  backText: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },
+  heroContent: { alignItems: 'flex-start' },
+  heroIcon: { fontSize: 36, marginBottom: 10 },
+  heroTitle: { color: WHITE, fontSize: 26, fontWeight: '800', marginBottom: 8 },
+  heroSub: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 20, marginBottom: 14 },
+  langRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  langBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 20, borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
+  langBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: WHITE,
+  },
+  langFlag: { fontSize: 14 },
+  langLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600' },
+  langLabelActive: { color: WHITE },
+
+  formCard: {
+    backgroundColor: WHITE, marginHorizontal: 16,
+    borderRadius: 20, padding: 22,
+    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 }, elevation: 6,
+    marginBottom: 16,
+  },
+  section: { marginBottom: 4 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  sectionDot: { width: 4, height: 18, borderRadius: 2, marginRight: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: DARK },
+  optional: { color: GRAY, fontWeight: '400', fontSize: 13 },
+  divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 16 },
+
   infoBox: {
-    backgroundColor: '#F5F3FF', borderRadius: 10, padding: 12,
-    marginBottom: 20, borderLeftWidth: 3, borderLeftColor: '#7C3AED',
+    backgroundColor: '#F5F3FF', borderRadius: 12, padding: 14,
+    marginBottom: 20, marginTop: 8,
   },
-  infoText: { fontSize: 13, color: '#5B21B6', lineHeight: 20 },
+  infoText: { color: '#5B21B6', fontSize: 13, lineHeight: 20 },
+
   btn: {
-    backgroundColor: '#7C3AED', borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center',
+    backgroundColor: PURPLE, borderRadius: 14,
+    paddingVertical: 17, alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'center',
+    shadowColor: PURPLE, shadowOpacity: 0.35,
+    shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  btnDisabled: { backgroundColor: '#C4B5FD' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  loadingText: { color: '#EDE9FE', fontSize: 13 },
+  btnLoading: { backgroundColor: '#9F6FE8', shadowOpacity: 0 },
+  btnText: { color: WHITE, fontSize: 15, fontWeight: '700' },
+
   disclaimer: {
-    textAlign: 'center', fontSize: 11, color: '#9CA3AF',
-    marginTop: 20, paddingHorizontal: 20,
+    textAlign: 'center', fontSize: 11,
+    color: 'rgba(255,255,255,0.5)', paddingHorizontal: 24, marginTop: 4,
   },
 });

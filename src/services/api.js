@@ -7,13 +7,13 @@ const api = axios.create({
   timeout: 90000,
 });
 
-export async function analyzeInteractions(diseases, drugs) {
-  const response = await api.post('/analyze', { diseases, drugs });
+export async function analyzeInteractions(diseases, drugs, language = 'pt') {
+  const response = await api.post('/analyze', { diseases, drugs, language });
   return response.data;
 }
 
-export async function suggestPrescription(diseases, allergies, currentMeds) {
-  const response = await api.post('/prescribe', { diseases, allergies, currentMeds });
+export async function suggestPrescription(diseases, allergies, currentMeds, language = 'pt') {
+  const response = await api.post('/prescribe', { diseases, allergies, currentMeds, language });
   return response.data;
 }
 
