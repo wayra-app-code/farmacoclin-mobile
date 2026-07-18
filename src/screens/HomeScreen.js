@@ -8,12 +8,12 @@ import TagInput from '../components/TagInput';
 import DrugAutocomplete from '../components/DrugAutocomplete';
 import { analyzeInteractions } from '../services/api';
 import { useLanguage } from '../LanguageContext';
+import { t } from '../i18n';
 
 const BLUE = '#1B4FD8';
 const TEAL = '#0D9488';
 const DARK = '#0F172A';
 const GRAY = '#64748B';
-const LIGHT = '#F1F5F9';
 const WHITE = '#FFFFFF';
 
 const LANGUAGES = [
@@ -30,14 +30,14 @@ export default function HomeScreen({ navigation }) {
   const { language, setLanguage } = useLanguage();
 
   async function handleAnalyze() {
-    if (!diseases.length) { Alert.alert('Atenção', 'Adiciona pelo menos uma doença ou condição.'); return; }
-    if (!drugs.length) { Alert.alert('Atenção', 'Adiciona pelo menos um medicamento.'); return; }
+    if (!diseases.length) { Alert.alert(t(language, 'alertAttention'), t(language, 'alertNoDisease')); return; }
+    if (!drugs.length) { Alert.alert(t(language, 'alertAttention'), t(language, 'alertNoDrug')); return; }
     setLoading(true);
     try {
       const result = await analyzeInteractions(diseases, drugs, language);
       navigation.navigate('Result', { result });
     } catch {
-      Alert.alert('Erro de ligação', 'Não foi possível ligar ao servidor. Verifica a tua ligação à internet.');
+      Alert.alert(t(language, 'alertErrorTitle'), t(language, 'alertError'));
     } finally { setLoading(false); }
   }
 
@@ -46,7 +46,6 @@ export default function HomeScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={BLUE} />
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* Hero header */}
         <View style={s.hero}>
           <View style={s.logoRow}>
             <View style={s.logoIcon}>
@@ -54,7 +53,7 @@ export default function HomeScreen({ navigation }) {
             </View>
             <Text style={s.logoText}>FarmacoClin</Text>
           </View>
-          <Text style={s.heroSubtitle}>Apoio farmacológico à decisão clínica</Text>
+          <Text style={s.heroSubtitle}>{t(language, 'appSubtitle')}</Text>
           <View style={s.langRow}>
             {LANGUAGES.map((l) => (
               <TouchableOpacity
@@ -69,33 +68,31 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Quick action cards */}
         <View style={s.cardsRow}>
           <TouchableOpacity style={[s.quickCard, { backgroundColor: TEAL }]} onPress={() => navigation.navigate('Prescribe')}>
             <Text style={s.quickCardIcon}>📋</Text>
-            <Text style={s.quickCardTitle}>Sugestão{'\n'}de Receita</Text>
+            <Text style={s.quickCardTitle}>{t(language, 'prescribeCard')}</Text>
             <Text style={s.quickCardArrow}>→</Text>
           </TouchableOpacity>
           <View style={[s.quickCard, { backgroundColor: '#1E3A8A', flex: 1.2 }]}>
             <Text style={s.quickCardIcon}>⚡</Text>
-            <Text style={s.quickCardTitle}>Análise{'\n'}Rápida</Text>
-            <Text style={s.quickCardSub}>Preenche abaixo</Text>
+            <Text style={s.quickCardTitle}>{t(language, 'analyzeCard')}</Text>
+            <Text style={s.quickCardSub}>{t(language, 'analyzeCardSub')}</Text>
           </View>
         </View>
 
-        {/* Main form card */}
         <View style={s.formCard}>
           <View style={s.formHeader}>
             <View style={[s.formHeaderDot, { backgroundColor: BLUE }]} />
-            <Text style={s.formTitle}>Análise de Interações</Text>
+            <Text style={s.formTitle}>{t(language, 'formTitle')}</Text>
           </View>
-          <Text style={s.formDesc}>Verifica conflitos entre medicamentos e condições clínicas</Text>
+          <Text style={s.formDesc}>{t(language, 'formDesc')}</Text>
 
           <View style={s.divider} />
 
           <TagInput
-            label="Doenças / Condições"
-            placeholder="ex: diabetes tipo 2, hipertensão..."
+            label={t(language, 'diseasesLabel')}
+            placeholder={t(language, 'diseasesPlaceholder')}
             tags={diseases}
             onAdd={(d) => setDiseases([...diseases, d])}
             onRemove={(d) => setDiseases(diseases.filter(x => x !== d))}
@@ -114,13 +111,13 @@ export default function HomeScreen({ navigation }) {
             disabled={loading}
           >
             {loading
-              ? <><ActivityIndicator color={WHITE} style={{ marginRight: 10 }} /><Text style={s.analyzeBtnText}>A analisar...</Text></>
-              : <Text style={s.analyzeBtnText}>Analisar Interações</Text>
+              ? <><ActivityIndicator color={WHITE} style={{ marginRight: 10 }} /><Text style={s.analyzeBtnText}>{t(language, 'analyzing')}</Text></>
+              : <Text style={s.analyzeBtnText}>{t(language, 'analyzeBtn')}</Text>
             }
           </TouchableOpacity>
         </View>
 
-        <Text style={s.disclaimer}>⚕️ Ferramenta de apoio à decisão clínica — não substitui o julgamento médico</Text>
+        <Text style={s.disclaimer}>{t(language, 'disclaimer')}</Text>
       </ScrollView>
     </SafeAreaView>
   );

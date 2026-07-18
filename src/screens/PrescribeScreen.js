@@ -6,6 +6,7 @@ import {
 import TagInput from '../components/TagInput';
 import { suggestPrescription } from '../services/api';
 import { useLanguage } from '../LanguageContext';
+import { t } from '../i18n';
 
 const PURPLE = '#6D28D9';
 const DARK = '#0F172A';
@@ -28,20 +29,20 @@ export default function PrescribeScreen({ navigation }) {
   const { language, setLanguage } = useLanguage();
 
   async function handlePrescribe() {
-    if (!diseases.length) { Alert.alert('Atenção', 'Adiciona pelo menos uma doença ou condição.'); return; }
+    if (!diseases.length) { Alert.alert(t(language, 'alertAttention'), t(language, 'alertNoDisease')); return; }
     setLoading(true);
-    setLoadingMsg('A consultar guidelines clínicas...');
-    const t1 = setTimeout(() => setLoadingMsg('A analisar interações e contraindicações...'), 5000);
-    const t2 = setTimeout(() => setLoadingMsg('A preparar sugestão de receita...'), 12000);
+    setLoadingMsg(t(language, 'loadingMsg1'));
+    const t1 = setTimeout(() => setLoadingMsg(t(language, 'loadingMsg2')), 5000);
+    const t2 = setTimeout(() => setLoadingMsg(t(language, 'loadingMsg3')), 12000);
     try {
       const result = await suggestPrescription(diseases, allergies, currentMeds, language);
       clearTimeout(t1); clearTimeout(t2);
       navigation.navigate('Result', { result: { ...result, analysis: result.suggestion, isPrescription: true } });
     } catch (err) {
       clearTimeout(t1); clearTimeout(t2);
-      Alert.alert('Erro', err.code === 'ECONNABORTED'
-        ? 'A análise demorou demasiado. Tenta novamente.'
-        : 'Não foi possível ligar ao servidor.');
+      Alert.alert(t(language, 'alertErrorTitle'), err.code === 'ECONNABORTED'
+        ? t(language, 'alertTimeout')
+        : t(language, 'alertError'));
     } finally { setLoading(false); setLoadingMsg(''); }
   }
 
@@ -50,41 +51,38 @@ export default function PrescribeScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={PURPLE} />
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* Header */}
         <View style={s.hero}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Text style={s.backText}>← Voltar</Text>
+            <Text style={s.backText}>{t(language, 'back')}</Text>
           </TouchableOpacity>
           <View style={s.heroContent}>
             <Text style={s.heroIcon}>📋</Text>
-            <Text style={s.heroTitle}>Sugestão de Receita</Text>
-            <Text style={s.heroSub}>Medicação baseada nas condições do paciente e guidelines clínicas</Text>
-          <View style={s.langRow}>
-            {LANGUAGES.map((l) => (
-              <TouchableOpacity
-                key={l.code}
-                style={[s.langBtn, language === l.code && s.langBtnActive]}
-                onPress={() => setLanguage(l.code)}
-              >
-                <Text style={s.langFlag}>{l.flag}</Text>
-                <Text style={[s.langLabel, language === l.code && s.langLabelActive]}>{l.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+            <Text style={s.heroTitle}>{t(language, 'prescribeTitle')}</Text>
+            <Text style={s.heroSub}>{t(language, 'prescribeSub')}</Text>
+            <View style={s.langRow}>
+              {LANGUAGES.map((l) => (
+                <TouchableOpacity
+                  key={l.code}
+                  style={[s.langBtn, language === l.code && s.langBtnActive]}
+                  onPress={() => setLanguage(l.code)}
+                >
+                  <Text style={s.langFlag}>{l.flag}</Text>
+                  <Text style={[s.langLabel, language === l.code && s.langLabelActive]}>{l.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
 
-        {/* Form */}
         <View style={s.formCard}>
-
           <View style={s.section}>
             <View style={s.sectionHeader}>
               <View style={[s.sectionDot, { backgroundColor: PURPLE }]} />
-              <Text style={s.sectionTitle}>Condições do Paciente</Text>
+              <Text style={s.sectionTitle}>{t(language, 'patientConditions')}</Text>
             </View>
             <TagInput
               label=""
-              placeholder="ex: diabetes tipo 2, dores na coluna..."
+              placeholder={t(language, 'patientPlaceholder')}
               tags={diseases}
               onAdd={(d) => setDiseases([...diseases, d])}
               onRemove={(d) => setDiseases(diseases.filter(x => x !== d))}
@@ -97,11 +95,11 @@ export default function PrescribeScreen({ navigation }) {
           <View style={s.section}>
             <View style={s.sectionHeader}>
               <View style={[s.sectionDot, { backgroundColor: '#DC2626' }]} />
-              <Text style={s.sectionTitle}>Alergias <Text style={s.optional}>(opcional)</Text></Text>
+              <Text style={s.sectionTitle}>{t(language, 'allergies')} <Text style={s.optional}>{t(language, 'optional')}</Text></Text>
             </View>
             <TagInput
               label=""
-              placeholder="ex: penicilina, AINEs, sulfamidas..."
+              placeholder={t(language, 'allergiesPlaceholder')}
               tags={allergies}
               onAdd={(d) => setAllergies([...allergies, d])}
               onRemove={(d) => setAllergies(allergies.filter(x => x !== d))}
@@ -114,11 +112,11 @@ export default function PrescribeScreen({ navigation }) {
           <View style={s.section}>
             <View style={s.sectionHeader}>
               <View style={[s.sectionDot, { backgroundColor: '#0D9488' }]} />
-              <Text style={s.sectionTitle}>Medicação Actual <Text style={s.optional}>(opcional)</Text></Text>
+              <Text style={s.sectionTitle}>{t(language, 'currentMeds')} <Text style={s.optional}>{t(language, 'optional')}</Text></Text>
             </View>
             <TagInput
               label=""
-              placeholder="ex: metformina, omeprazol..."
+              placeholder={t(language, 'currentMedsPlaceholder')}
               tags={currentMeds}
               onAdd={(d) => setCurrentMeds([...currentMeds, d])}
               onRemove={(d) => setCurrentMeds(currentMeds.filter(x => x !== d))}
@@ -127,7 +125,7 @@ export default function PrescribeScreen({ navigation }) {
           </View>
 
           <View style={s.infoBox}>
-            <Text style={s.infoText}>🤖 O Claude analisa as guidelines clínicas actuais e sugere medicação de primeira e segunda linha, verificando interações e contraindicações.</Text>
+            <Text style={s.infoText}>{t(language, 'prescribeInfo')}</Text>
           </View>
 
           <TouchableOpacity
@@ -137,12 +135,12 @@ export default function PrescribeScreen({ navigation }) {
           >
             {loading
               ? <><ActivityIndicator color={WHITE} style={{ marginRight: 10 }} /><Text style={s.btnText}>{loadingMsg}</Text></>
-              : <Text style={s.btnText}>Gerar Sugestão de Receita</Text>
+              : <Text style={s.btnText}>{t(language, 'prescribeBtn')}</Text>
             }
           </TouchableOpacity>
         </View>
 
-        <Text style={s.disclaimer}>⚕️ Sugestão de apoio clínico — não substitui o julgamento médico</Text>
+        <Text style={s.disclaimer}>{t(language, 'prescribeDisclaimer')}</Text>
       </ScrollView>
     </SafeAreaView>
   );

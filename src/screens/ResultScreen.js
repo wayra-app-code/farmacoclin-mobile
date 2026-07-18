@@ -1,4 +1,6 @@
 import React from 'react';
+import { useLanguage } from '../LanguageContext';
+import { t } from '../i18n';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, StatusBar,
@@ -55,6 +57,7 @@ function renderAnalysis(text) {
 
 export default function ResultScreen({ navigation, route }) {
   const { result } = route.params;
+  const { language } = useLanguage();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -63,7 +66,7 @@ export default function ResultScreen({ navigation, route }) {
       {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← {result.isPrescription ? 'Nova receita' : 'Nova análise'}</Text>
+          <Text style={styles.backText}>← {result.isPrescription ? t(language, 'newPrescription') : t(language, 'newAnalysis')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -79,13 +82,13 @@ export default function ResultScreen({ navigation, route }) {
           {result.isPrescription ? (
             <View style={[styles.chip, { backgroundColor: '#F5F3FF' }]}>
               <Text style={[styles.chipText, { color: '#7C3AED' }]}>
-                📋 Sugestão de receita
+                {t(language, 'prescriptionChip')}
               </Text>
             </View>
           ) : (
             <View style={[styles.chip, { backgroundColor: '#EFF6FF' }]}>
               <Text style={[styles.chipText, { color: '#2563EB' }]}>
-                💊 {result.drugs?.length ?? 0} medicamento{(result.drugs?.length ?? 0) !== 1 ? 's' : ''}
+                💊 {result.drugs?.length ?? 0} {(result.drugs?.length ?? 0) !== 1 ? t(language, 'drugs') : t(language, 'drug')}
               </Text>
             </View>
           )}
@@ -95,8 +98,7 @@ export default function ResultScreen({ navigation, route }) {
         {result.drugsNotFound?.length > 0 && (
           <View style={styles.warning}>
             <Text style={styles.warningText}>
-              ⚠️ Não encontrados na base de dados OpenFDA: {result.drugsNotFound.join(', ')}.
-              A análise Claude ainda os considera.
+              {t(language, 'drugsNotFound')} {result.drugsNotFound.join(', ')}. {t(language, 'drugsNotFoundSuffix')}
             </Text>
           </View>
         )}
@@ -107,7 +109,7 @@ export default function ResultScreen({ navigation, route }) {
         </View>
 
         <Text style={styles.disclaimer}>
-          ⚕️ Análise gerada por IA com dados OpenFDA. Ferramenta de apoio clínico — não substitui o julgamento médico.
+          {t(language, 'resultDisclaimer')}
         </Text>
       </ScrollView>
     </SafeAreaView>
